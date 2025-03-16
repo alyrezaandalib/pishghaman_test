@@ -1,35 +1,44 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
+import { Text } from '@mantine/core';
+import { useListState } from '@mantine/hooks';
+import {useStore} from "./store";
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+    const data = useStore((state) => state.data)
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    const [state, handlers] = useListState(data);
+
+    const items = state.map((item , index : number) => (
+        <Draggable key={item.id} index={index} draggableId={item.name}>
+            {(provided) => (
+                <div
+                    className={"bg-[#555] p-2 rounded shadow-lg"}
+                    {...provided.draggableProps}
+                    {...provided.dragHandleProps}
+                    ref={provided.innerRef}
+                >
+                    <Text>{item.name}</Text>
+                </div>
+            )}
+        </Draggable>
+    ));
+
+    return (
+     <div className={"w-full h-screen flex items-center justify-center p-10 bg-[#333]"}>
+         <DragDropContext
+             onDragEnd={({ destination, source }) =>
+                 handlers.reorder({ from: source.index, to: destination?.index || 0 })
+             }
+         >
+             <Droppable droppableId="dnd-list" direction="vertical">
+                 {(provided) => (
+                     <div className={"w-full flex flex-col gap-1"} {...provided.droppableProps} ref={provided.innerRef}>
+                         {items}
+                         {provided.placeholder}
+                     </div>
+                 )}
+             </Droppable>
+         </DragDropContext>
+     </div>
+    );
 }
-
-export default App
